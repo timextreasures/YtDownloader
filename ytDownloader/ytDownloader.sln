@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ytDownloader", "ytDownloade
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ytPlayListFetcher", "..\ytPlayListFetcher\ytPlayListFetcher.csproj", "{076BC890-16AF-4E19-8EBA-6DBE99483117}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ytDownloader-GUI", "..\ytDownloader-GUI\ytDownloader-GUI.csproj", "{D21C02B3-DB71-40A3-825C-4F060CDDA88C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{076BC890-16AF-4E19-8EBA-6DBE99483117}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{076BC890-16AF-4E19-8EBA-6DBE99483117}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{076BC890-16AF-4E19-8EBA-6DBE99483117}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D21C02B3-DB71-40A3-825C-4F060CDDA88C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D21C02B3-DB71-40A3-825C-4F060CDDA88C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D21C02B3-DB71-40A3-825C-4F060CDDA88C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D21C02B3-DB71-40A3-825C-4F060CDDA88C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
