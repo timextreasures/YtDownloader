@@ -6,7 +6,16 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+
+using Google.Apis.Auth.OAuth2;
+using Google.Apis.Services;
+using Google.Apis.Upload;
+using Google.Apis.Util.Store;
+using Google.Apis.YouTube.v3;
+using Google.Apis.YouTube.v3.Data;
 using YoutubeExtractor;
+
+
 namespace ytDownloader
 {
 
@@ -23,9 +32,28 @@ namespace ytDownloader
             public string link;
             public type downloadType;
         }
+
+        static private string downloadDirectory = "";
+        static private string ytLink = "https://www.youtube.com/watch?v=";
+        static private YouTubeService youtubeService = new YouTubeService();
         static void Main(string[] args)
         {
 
+            try
+            {
+                Run();
+            }
+            catch (Exception xe)
+            {
+                Console.WriteLine(xe.Message);
+                
+            }
+            Console.WriteLine("Press a key to continue...");
+            Console.ReadKey();
+        }
+
+        static void Run()
+        {
             StreamReader config = File.OpenText("config.cfg");
             if (config.EndOfStream)
             {
@@ -34,7 +62,6 @@ namespace ytDownloader
                 return;
             }
 
-            string downloadDirectory="";
             while (!config.EndOfStream)
             {
                 string extractedLine = config.ReadLine();
@@ -48,6 +75,14 @@ namespace ytDownloader
             config.Close();
 
             List<linkInfo> m_Links = new List<linkInfo>();
+
+
+
+            youtubeService = new YouTubeService(new BaseClientService.Initializer()
+            {
+                ApiKey = "AIzaSyDzqeoR5mWrtJJ1Qt1SL_DLRDJvVKStdSo",
+                ApplicationName = new Program().GetType().ToString()
+            });
             /*
             * Main loop
             */
@@ -62,7 +97,7 @@ namespace ytDownloader
                 {
                     command = input.Substring(0, input.IndexOf(" "));
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     command = input;
                 }
@@ -85,7 +120,12 @@ namespace ytDownloader
                 }
                 else if (command.ToLower().Equals("help"))
                 {
-                    Console.Write("Available commands: \n \t - download_mp4 \n \t - download_mp3\n Usage: \"download_mp4 [insert link here] \"\n");
+                    StreamReader reader = File.OpenText("README.txt");
+                    while (!reader.EndOfStream)
+                    {
+                        Console.WriteLine(reader.ReadLine());
+                    }
+                    reader.Close();
                 }
                 else if (command.ToLower().Contains("add_mp3"))
                 {
@@ -123,10 +163,10 @@ namespace ytDownloader
                 else if (command.Contains("startPlaylist"))
                 {
                     List<linkInfo> playlist = new List<linkInfo>();
-                    string playlistFile = input.Substring(input.IndexOf(command) + command.Length+1);
+                    string playlistFile = input.Substring(input.IndexOf(command) + command.Length + 1);
 
                     StreamReader tmpFile = File.OpenText(playlistFile);
-                    string fileName = playlistFile.Substring(0,playlistFile.Length -4);
+                    string fileName = playlistFile.Substring(0, playlistFile.Length - 4);
 
                     while (!tmpFile.EndOfStream)
                     {
@@ -149,26 +189,156 @@ namespace ytDownloader
                     DownloadPlaylist(playlist, downloadDirectory + "/" + fileName);
                     Console.WriteLine("Finished downloading " + fileName);
                 }
+                else if (command.Equals("downloadChannel"))
+                {
+                    int firstSpace = input.IndexOf(" ");
+                    int secondSpace = input.IndexOf(" ", firstSpace + 1);
+                    string strtype = input.Substring(firstSpace + 1, secondSpace - firstSpace - 1);
+
+                    type tmpType = type.None;
+                    if (strtype.ToLower().Equals("mp3"))
+                    {
+                        tmpType = type.MP3;
+                    }
+                    else if (strtype.ToLower() == "mp4")
+                    {
+                        tmpType = type.MP4;
+                    }
+
+                    string channelname = input.Substring(secondSpace + 1);
+                    try
+                    {
+                        new Program().downloadChannel(channelname, tmpType).Wait();
+                    }
+                    catch (AggregateException e)
+                    {
+                        foreach (var item in e.InnerExceptions)
+                        {
+                            Console.WriteLine(item.Message);
+                        }
+
+                    }
+
+                }
+                else if (command.Equals("downloadPlaylist"))
+                {
+                    int firstSpace = input.IndexOf(" ");
+                    int secondSpace = input.IndexOf(" ", firstSpace + 1);
+                    string strtype = input.Substring(firstSpace + 1, secondSpace - firstSpace - 1);
+
+                    type tmpType = type.None;
+                    if (strtype.ToLower().Equals("mp3"))
+                    {
+                        tmpType = type.MP3;
+                    }
+                    else if (strtype.ToLower() == "mp4")
+                    {
+                        tmpType = type.MP4;
+                    }
+
+                    string playlist = input.Substring(secondSpace + 1);
+                    try
+                    {
+                        new Program().downloadPlaylist(playlist, tmpType).Wait();
+                    }
+                    catch (AggregateException e)
+                    {
+                        foreach (var item in e.InnerExceptions)
+                        {
+                            Console.WriteLine(item.Message);
+                        }
+
+                    }
+
+                }
 
                 if (directDownload == true)
                 {
-                    switch (downloadType)
-                    {
-                        case type.MP3:
-                            Program.DownloadMP3(link, downloadDirectory);
-                            break;
-                        case type.MP4:
-                            Program.DownloadMP4(link, downloadDirectory);
-                            break;
-                        case type.None:
-                            break;
-                        default:
-                            break;
-                    }
+                    linkInfo info = new linkInfo();
+                    info.link = link;
+                    info.downloadType = downloadType;
+                    Download(info, downloadDirectory);
                 }
 
-               
+            }
+        }
+        static void Download(linkInfo info,string dir)
+        {
+            switch (info.downloadType)
+            {
+                case type.MP3:
+                    Program.DownloadMP3(info.link, dir);
+                    break;
+                case type.MP4:
+                    Program.DownloadMP4(info.link, dir);
+                    break;
+                case type.None:
+                    break;
+                default:
+                    break;
+            }
+        }
 
+        /*
+        * Downloads all the uploads of 1 channel!
+        */
+        private async Task downloadChannel(string channelname, type type)
+        {
+
+            var channelListRequest = youtubeService.Channels.List("contentDetails, statistics, snippet");
+            channelListRequest.ForUsername = channelname;
+
+            var channelListResponse = await channelListRequest.ExecuteAsync();
+            foreach (var channel in channelListResponse.Items)
+            {
+                var uploadListId = channel.ContentDetails.RelatedPlaylists.Uploads;
+                var nextToken = "";
+                while (nextToken != null)
+                {
+                    var playlistrequest = youtubeService.PlaylistItems.List("snippet");
+                    playlistrequest.PlaylistId = uploadListId;
+                    playlistrequest.MaxResults = 50;
+                    playlistrequest.PageToken = nextToken;
+                    var playlistItemsListResponse = await playlistrequest.ExecuteAsync();
+                    foreach (var video in playlistItemsListResponse.Items)
+                    {
+                        Console.WriteLine("Download " + video.Snippet.Title);
+                        switch (type)
+                        {
+                            case type.MP3:
+                                DownloadMP3(ytLink + video.Snippet.ResourceId.VideoId,downloadDirectory);
+                                break;
+                            case type.MP4:
+                                DownloadMP4(ytLink + video.Snippet.ResourceId.VideoId,downloadDirectory);
+                                break;
+                            case type.None:
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+
+                    nextToken = channelListResponse.NextPageToken;
+                }
+            }
+        }
+        /*
+        * Downloads a playlist
+        */ 
+        private async Task downloadPlaylist(string playlistID, type type)
+        {
+
+            var playlistRequest = youtubeService.PlaylistItems.List("contentDetails,id,snippet");
+            playlistRequest.PlaylistId = playlistID;
+
+            var playlistResponse = await playlistRequest.ExecuteAsync();
+            foreach (var video in playlistResponse.Items)
+            {
+                Console.WriteLine("Downloading " + video.Snippet.Title);
+                linkInfo info;
+                info.downloadType = type;
+                info.link = ytLink + video.Snippet.ResourceId.VideoId;
+                Download(info, downloadDirectory);
             }
         }
         static void DownloadPlaylist(List<linkInfo> list, string dir)
@@ -210,15 +380,25 @@ namespace ytDownloader
             }
             
             var audioDownloader = new AudioDownloader(video, Path.Combine(downloadDir, RemoveIllegalPathCharacters(video.Title) + video.AudioExtension));
+            int ticks = 0;
             audioDownloader.DownloadProgressChanged += (sender, argss) =>
             {
+                ticks++;
 
-                    Console.WriteLine(argss.ProgressPercentage);
+                if (ticks > 1000)
+                {
+                    Console.Write("#");
+                    ticks -= 1000;
+                }
+                
+            };
+            audioDownloader.DownloadFinished += (sender, argss) =>
+            {
+                
+                Console.WriteLine("\nFinished download " + video.Title + video.AudioExtension);
             };
 
-            Console.WriteLine("Started audio extraction and download of " + video.Title + video.AudioExtension);
             audioDownloader.Execute();
-            Console.WriteLine("Finished audio extraction and download of " + video.Title + video.AudioExtension);
         }
         static void DownloadMP4(string link, string downloadDir)
         {
@@ -235,10 +415,18 @@ namespace ytDownloader
 
             var videoDownloader = new VideoDownloader(video, Path.Combine(downloadDir, RemoveIllegalPathCharacters(video.Title) + video.VideoExtension));
             videoDownloader.DownloadStarted += (sender, argss) => Console.WriteLine("Started downloading " + video.Title + video.VideoExtension);
+
+            int ticks = 0;
             videoDownloader.DownloadProgressChanged += (sender, argss) =>
             {
-                    Console.WriteLine(argss.ProgressPercentage);
-                
+                ticks++;
+
+                if (ticks > 1000)
+                {
+                    Console.Write("#");
+                    ticks -= 1000;
+                }
+
             };
             videoDownloader.DownloadFinished += (sender, argss) => Console.WriteLine("Finished downloading " + video.Title + video.VideoExtension);
 

@@ -1,9 +1,0 @@
-D:\user\Jonathan\Documents\GitHub\CppTests\ytDownloader\bin\Release\ytDownloader.exe.config
-D:\user\Jonathan\Documents\GitHub\CppTests\ytDownloader\bin\Release\ytDownloader.exe
-D:\user\Jonathan\Documents\GitHub\CppTests\ytDownloader\bin\Release\ytDownloader.pdb
-D:\user\Jonathan\Documents\GitHub\CppTests\ytDownloader\bin\Release\Newtonsoft.Json.dll
-D:\user\Jonathan\Documents\GitHub\CppTests\ytDownloader\bin\Release\YoutubeExtractor.dll
-D:\user\Jonathan\Documents\GitHub\CppTests\ytDownloader\bin\Release\Newtonsoft.Json.xml
-D:\user\Jonathan\Documents\GitHub\CppTests\ytDownloader\bin\Release\YoutubeExtractor.xml
-D:\user\Jonathan\Documents\GitHub\CppTests\ytDownloader\obj\Release\ytDownloader.exe
-D:\user\Jonathan\Documents\GitHub\CppTests\ytDownloader\obj\Release\ytDownloader.pdb
