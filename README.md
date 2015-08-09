@@ -1,3 +1,3 @@
---------------------------------
-This is a repo for all kind of test projects developed by Jonathansty
---------------------------------
+Projects are build with visual studio community 2015
+
+To compile just open the .sln files.
