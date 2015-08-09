@@ -1,14 +1,14 @@
-﻿Build started 8/9/2015 12:22:34 PM.
-     1>Project "D:\user\Jonathan\Documents\GitHub\CppTests\TestEnvironment\timezoneConverter\timezoneConverter.vcxproj" on node 2 (Build target(s)).
+﻿Build started 8/9/2015 2:20:21 PM.
+     1>Project "D:\user\Jonathan\Documents\GitHub\CppTests\TestEnvironment\timezoneConverter\timezoneConverter.vcxproj" on node 3 (Build target(s)).
      1>ClCompile:
-         D:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"Debug\\" /Fd"Debug\vc140.pdb" /Gd /TP /analyze- /errorReport:prompt main.cpp
+         D:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\CL.exe /c /I"C:\Program Files (x86)\Visual Leak Detector\include" /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"Debug\\" /Fd"Debug\vc140.pdb" /Gd /TP /analyze- /errorReport:prompt main.cpp
          main.cpp
-     1>d:\user\jonathan\documents\github\cpptests\testenvironment\timezoneconverter\main.cpp(64): warning C4715: 'toString': not all control paths return a value
+     1>d:\user\jonathan\documents\github\cpptests\testenvironment\timezoneconverter\main.cpp(74): warning C4715: 'toString': not all control paths return a value
        Link:
-         D:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"D:\user\Jonathan\Documents\GitHub\CppTests\TestEnvironment\Debug\timezoneConverter.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /Debug /PDB:"D:\user\Jonathan\Documents\GitHub\CppTests\TestEnvironment\Debug\timezoneConverter.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"D:\user\Jonathan\Documents\GitHub\CppTests\TestEnvironment\Debug\timezoneConverter.lib" /MACHINE:X86 Debug\main.obj
+         D:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"D:\user\Jonathan\Documents\GitHub\CppTests\TestEnvironment\Debug\timezoneConverter.exe" /INCREMENTAL /NOLOGO /LIBPATH:"C:\Program Files (x86)\Visual Leak Detector\lib\Win32" kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /Debug /PDB:"D:\user\Jonathan\Documents\GitHub\CppTests\TestEnvironment\Debug\timezoneConverter.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"D:\user\Jonathan\Documents\GitHub\CppTests\TestEnvironment\Debug\timezoneConverter.lib" /MACHINE:X86 Debug\main.obj
          timezoneConverter.vcxproj -> D:\user\Jonathan\Documents\GitHub\CppTests\TestEnvironment\Debug\timezoneConverter.exe
      1>Done Building Project "D:\user\Jonathan\Documents\GitHub\CppTests\TestEnvironment\timezoneConverter\timezoneConverter.vcxproj" (Build target(s)).
 
 Build succeeded.
 
-Time Elapsed 00:00:00.82
+Time Elapsed 00:00:01.03
