@@ -1,6 +1,9 @@
 #include "stdincludes.h"
 using namespace std;
 
+/*
+* structs used to store time.
+*/
 enum zone
 {
 	GMT,
@@ -39,12 +42,19 @@ struct timeZone
 	zone zone = zone::GMT;
 	ttime t = ttime(0,0);
 };
+
+/*
+* Helper function to pause the current app
+*/
 void pause()
 {
 	cout << "Press any key to exit." << endl;
 	getchar();
 }
 
+/*
+* Helper function to convert zone enum to a string
+*/
 string toString(zone zone)
 {
 	switch (zone)
@@ -85,8 +95,6 @@ timeZone extractTimeZone(string input, bool isTime)
 		{
 			cout << e.what() << endl;
 		}
-		
-
 	}
 	else if (input.find("UTC") != string::npos)
 	{
@@ -100,7 +108,6 @@ timeZone extractTimeZone(string input, bool isTime)
 		{
 			cout << e.what() << endl;
 		}
-		
 	}
 	else if (input.find("PDT") != string::npos)
 	{
@@ -138,18 +145,12 @@ timeZone extractTimeZone(string input, bool isTime)
 
 	return tmpTimeZone;
 }
-
+/*
+* This method calculates to adjusted time.
+*/
 timeZone convert(const timeZone& curr, const timeZone& dest)
 {
 	// First convert it to GMT and then do the calculations
-	if (curr.zone != GMT)
-	{
-
-	}
-	if (dest.zone != GMT)
-	{
-
-	}
 	timeZone end;
 	end.t = curr.t;
 	int zeroOffset = -curr.offset;
@@ -180,6 +181,10 @@ timeZone convert(const timeZone& curr, const timeZone& dest)
 	// Then convert back to the specified zone requested
 	return end;
 }
+
+/*
+* Main entry
+*/
 int main(int argc, char** argvs)
 {
 
