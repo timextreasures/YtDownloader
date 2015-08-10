@@ -10,6 +10,14 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+
+using Google.Apis.Auth.OAuth2;
+using Google.Apis.Services;
+using Google.Apis.Upload;
+using Google.Apis.Util.Store;
+using Google.Apis.YouTube.v3;
+using Google.Apis.YouTube.v3.Data;
+
 using YoutubeExtractor;
 
 namespace ytDownloader_GUI
@@ -20,6 +28,14 @@ namespace ytDownloader_GUI
         MP4,
         None,
     }
+    enum ColumnData
+    {
+        channel = 0,
+        Title = 1,
+        Link = 2,
+        Type = 3,
+        dataCount = 4 ,
+    }
     struct linkInfo
     {
         public string link;
@@ -29,10 +45,46 @@ namespace ytDownloader_GUI
     public partial class printingBox : Form
     {
         private string downloadDir = "Download/";
-        
+        private YouTubeService youtubeService;
+        private string ytLink = "https://www.youtube.com/watch?v=";
         public printingBox()
         {
             InitializeComponent();
+            try
+            {
+                StreamReader config = File.OpenText("config.cfg");
+                while (!config.EndOfStream)
+                {
+                    string line = config.ReadLine();
+                    if (line.Contains("downloadPath="))
+                    {
+                        int start = line.IndexOf("\"") + 1;
+                        int end = line.LastIndexOf("\"");
+                        string downloadPath = line.Substring(start, end - start);
+                        downloadDir = downloadPath;
+                        label_downloaddir.Text = downloadDir;
+                    }
+                }
+                config.Close();
+            }
+            catch (FileNotFoundException)
+            {
+                StreamWriter configWrite = File.CreateText("config.cfg");
+                MessageBox.Show("Please select a download path!");
+                save_download.ShowDialog();
+                label_downloaddir.Text = save_download.SelectedPath;
+                downloadDir = save_download.SelectedPath;
+                configWrite.Write("downloadPath=" + "\" " + downloadDir + "\"");
+                configWrite.Close();
+            }
+
+            button_download.Enabled = false;
+
+            youtubeService = new YouTubeService(new BaseClientService.Initializer()
+            {
+                ApiKey = "AIzaSyDzqeoR5mWrtJJ1Qt1SL_DLRDJvVKStdSo",
+                ApplicationName = this.GetType().ToString()
+            });
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -40,19 +92,68 @@ namespace ytDownloader_GUI
             
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private async void button_mp3_Click(object sender, EventArgs e)
         {
             string link = txtBox_link.Text;
-            
-
+            txtBox_link.Clear();
             var items = list_queue.Items;
             ListViewItem item = null;
-            string compoundString = "mp3 " + txtBox_link.Text;
-            
-            if (!isFound(compoundString,items))
+
+            string prefix = comboBox_pick.SelectedItem.ToString();
+
+            if (prefix == "mp3" || prefix == "mp4")
             {
-                item = list_queue.Items.Add(compoundString);
+                string compoundString = comboBox_pick.SelectedItem + " " + txtBox_link.Text;
+
+                if (link.Contains("playlist"))
+                {
+                    string playlistId = link.Substring(link.LastIndexOf("=") + 1);
+                    await loadPlayList(playlistId, toType(prefix));
+                    button_download.Enabled = true;
+                    return;
+                }
+                else if (link.Contains("user"))
+                {
+                    int indexstart = link.IndexOf("user/") + "user/".Length;
+                    string username = link.Substring(indexstart, link.IndexOf("/", indexstart + 1) - indexstart);
+                    await loadChannel(username, toType(prefix), false);
+                    button_download.Enabled = true;
+
+                    return;
+                }
+                else if (link.Contains("channel"))
+                {
+                    int indexStart = link.IndexOf("channel") + "channel/".Length;
+                    int end = link.IndexOf("/", indexStart);
+                    if (end == -1)
+                    {
+                        end = link.Length;
+                    }
+                    string channelID = link.Substring(indexStart,end - indexStart);
+                    await loadChannel(channelID, toType(prefix), true);
+                    button_download.Enabled = true;
+                }
+                if (!isFound(compoundString, items))
+                {
+                    var videoRequest = youtubeService.Videos.List("contentDetails, id, snippet");
+
+                    string videoID = link.Substring(link.LastIndexOf("=")+1);
+                    videoRequest.Id = videoID;
+
+                    var videoResponse = await videoRequest.ExecuteAsync();
+                    foreach (var video in videoResponse.Items)
+                    {
+                        string[] str = new string[4];
+                        str[0] = video.Snippet.ChannelTitle;
+                        str[1] = video.Snippet.Title;
+                        str[2] = prefix;
+                        str[3] = link;
+                        item = list_queue.Items.Add(new ListViewItem(str));
+                    }
+                    
+                }
             }
+
             try
             {
                 using (var client = new MyClient())
@@ -67,7 +168,8 @@ namespace ytDownloader_GUI
                 list_queue.Items.Remove(item);
                 return;
             }
-
+            label_Items.Text = list_queue.Items.Count.ToString();
+            button_download.Enabled = true;
         }
 
         private void textBox1_TextChanged(object sender, EventArgs e)
@@ -85,68 +187,36 @@ namespace ytDownloader_GUI
             
         }
 
-        private void button_addmp4_Click(object sender, EventArgs e)
-        {
-            string link = txtBox_link.Text;
-            var items = list_queue.Items;
-            ListViewItem item = null;
-            string compoundString = "mp4 " + txtBox_link.Text;
-            if (!isFound(compoundString, items))
-            {
-                item = list_queue.Items.Add(compoundString);
-            }
-            
-            try
-            {
-                using (var client = new MyClient())
-                {
-                    client.HeadOnly = true;
-                    string s1 = client.DownloadString(link);
-                }
-            }
-            catch (Exception ek)
-            {
-                MessageBox.Show(ek.Message);
-                list_queue.Items.Remove(item);
-                return;
-            }
-
-        }
-
-        private void button1_Click_1(object sender, EventArgs e)
+        private void button_clearlist(object sender, EventArgs e)
         {
             list_queue.Items.Clear();
+            label_Items.Text = list_queue.Items.Count.ToString();
+            button_download.Enabled = false;
+            downloader.CancelAsync();
         }
 
-        private void button1_Click_2(object sender, EventArgs e)
+        private void button_startDownload(object sender, EventArgs e)
         {
             var items = list_queue.Items;
-            int amount = items.Count;
-            progress_label.Visible = true;
+
+            List<ListViewItem> listItems = new List<ListViewItem>();
             for (int i = 0; i < items.Count; i++)
             {
-                string input = items[i].Text;
-                string type = input.Substring(0, input.IndexOf(" "));
-                type actualType = toType(type);
-
-                string link = input.Substring(type.Length+1);
-
-                linkInfo info;
-                info.link = link;
-                info.downloadType = actualType;
-                progress_label.Text = i+1 + "/" + amount;
-                progress_label.Update();
-                Download(info, downloadDir).Wait();
-                
-                
+                listItems.Add(items[i]);
             }
-            items.Clear();
-            progress_label.Visible = false;
+
+            button_download.Enabled = false;
+            if (!downloader.IsBusy)
+            {
+                downloader.RunWorkerAsync(listItems);
+            }
+            
         }
 
-        private void button1_Click_3(object sender, EventArgs e)
+        private void button_downloadDir(object sender, EventArgs e)
         {
             save_download.ShowDialog();
+            label_downloaddir.Text = save_download.SelectedPath;
             downloadDir = save_download.SelectedPath;
         }
 
@@ -168,6 +238,63 @@ namespace ytDownloader_GUI
             return found;
         }
 
+        private void download_progress_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button_delete_Click(object sender, EventArgs e)
+        {
+            var items = list_queue.SelectedItems;
+            int count = items.Count;
+            while (items.Count > 0 && items[0] != null)
+            {
+                list_queue.Items.Remove(items[0]);
+            }
+            label_Items.Text = list_queue.Items.Count.ToString();
+        }
+
+        private void downloader_DoWork(object sender, DoWorkEventArgs e)
+        {
+            var downloader = sender as BackgroundWorker;
+            downloader.ProgressChanged += downloader_ProgressChanged;
+            downloader.WorkerSupportsCancellation = true;
+            List<ListViewItem> items = (List<ListViewItem>)e.Argument;
+            var cnt = items.Count;
+            downloader.WorkerReportsProgress = true;
+            while (items.Count > 0 && !items[0].Equals(null))
+            {
+                linkInfo link;
+                link.link = items[0].SubItems[3].Text;
+                link.downloadType = toType(items[0].SubItems[2].Text);
+                Download(link, downloadDir);
+                items.RemoveAt(0);
+            }
+        }
+
+        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void downloader_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            download_progress.Value = e.ProgressPercentage;
+            var items = list_queue.Items;
+            if (items.Count > 0 && download_progress.Value > 99)
+            {
+                
+                items.RemoveAt(0);
+                label_Items.Text = items.Count.ToString();
+            }
+        }
+        private void downloader_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            
+        }
+        /*
+        * Converts string to type
+        */
         static type toType(string input)
         {
             if (input.ToLower().Equals("mp3"))
@@ -180,8 +307,28 @@ namespace ytDownloader_GUI
             }
             return type.None;
         }
-
-        async Task Download(linkInfo info, string dir)
+        static string typeToString(type type)
+        {
+            switch (type)
+            {
+                case type.MP3:
+                    return "mp3";
+                    break;
+                case type.MP4:
+                    return "mp4";
+                    break;
+                case type.None:
+                    return "none";
+                    break;
+                default:
+                    return " ";
+                    break;
+            }
+        }
+        /*
+        * Downloads the link to the dir
+        */
+        private void Download(linkInfo info, string dir)
         {
             switch (info.downloadType)
             {
@@ -197,8 +344,7 @@ namespace ytDownloader_GUI
                     break;
             }
         }
-
-        void DownloadMP3(string link, string downloadDir)
+        private void DownloadMP3(string link, string downloadDir)
         {
             Directory.CreateDirectory(downloadDir);
             IEnumerable<VideoInfo> videoInfos = DownloadUrlResolver.GetDownloadUrls(link);
@@ -214,19 +360,18 @@ namespace ytDownloader_GUI
             var audioDownloader = new AudioDownloader(video, Path.Combine(downloadDir, RemoveIllegalPathCharacters(video.Title) + video.AudioExtension));
             audioDownloader.DownloadProgressChanged += (sender, argss) =>
             {
-                download_progress.Value = (int)argss.ProgressPercentage;
+                downloader.ReportProgress((int)argss.ProgressPercentage);
 
             };
             audioDownloader.DownloadFinished += (sender, argss) =>
             {
-                download_progress.Value = 0;
-                Console.WriteLine("\nFinished download " + video.Title + video.AudioExtension);
+                
+
             };
 
             audioDownloader.Execute();
         }
-
-        void DownloadMP4(string link, string downloadDir)
+        private void DownloadMP4(string link, string downloadDir)
         {
             Directory.CreateDirectory(downloadDir);
 
@@ -244,13 +389,15 @@ namespace ytDownloader_GUI
 
             videoDownloader.DownloadProgressChanged += (sender, argss) =>
             {
-                download_progress.Value = (int)argss.ProgressPercentage;
+                downloader.ReportProgress((int)argss.ProgressPercentage);
 
             };
-            videoDownloader.DownloadFinished += (sender, argss) => download_progress.Value = 0;
 
             videoDownloader.Execute();
         }
+        /*
+        * Removes illegall path characters
+        */
         private static string RemoveIllegalPathCharacters(string path)
         {
             string regexSearch = new string(Path.GetInvalidFileNameChars()) + new string(Path.GetInvalidPathChars());
@@ -258,30 +405,82 @@ namespace ytDownloader_GUI
             return r.Replace(path, "");
         }
 
-        private void download_progress_Click(object sender, EventArgs e)
+        async Task loadPlayList(string playlistID, type type)
         {
+            
+            var pageToken = "";
+            while (pageToken != null)
+            {
+                var playlistRequest = youtubeService.PlaylistItems.List("contentDetails, id, snippet");
+                playlistRequest.PlaylistId = playlistID;
+                playlistRequest.PageToken = pageToken;
+
+                playlistRequest.MaxResults = 20;
+
+                var playlistResponse = await playlistRequest.ExecuteAsync();
+                foreach (var item in playlistResponse.Items)
+                {
+                    string[] str = new string[4];
+                    str[0] = item.Snippet.ChannelTitle;
+                    str[1] = item.Snippet.Title;
+                    str[2] = typeToString(type);
+                    str[3] = ytLink + item.Snippet.ResourceId.VideoId;
+                    list_queue.Items.Add(new ListViewItem(str));
+
+                }
+                label_Items.Text = list_queue.Items.Count.ToString();
+                pageToken = playlistResponse.NextPageToken;
+            }
+            
             
         }
 
-        private void button_delete_Click(object sender, EventArgs e)
+
+        async Task loadChannel(string userName, type type,bool isID)
         {
-            var items = list_queue.SelectedItems;
-            ListView.ListViewItemCollection list = list_queue.Items;
-            list.Clear();
-            int count = items.Count;
-            for (int i = 0; i < count; i++)
+            var channelItemsListRequest = youtubeService.Channels.List("contentDetails, snippet, id, statistics");
+            if (!isID)
+                channelItemsListRequest.ForUsername = userName;
+            else
+                channelItemsListRequest.Id = userName;
+
+            var channelItemsListResponse = await channelItemsListRequest.ExecuteAsync();
+            foreach (var channel in channelItemsListResponse.Items)
             {
-                list.Add(items[i]);
-            }
-            for (int i = 0; i < list.Count; i++)
-            {
-                list_queue.Items.Remove(list[i]);
+                var pageToken = "";
+                var uploadListID = channel.ContentDetails.RelatedPlaylists.Uploads;
+                while (pageToken != null)
+                {
+                    var playlistItemsRequest = youtubeService.PlaylistItems.List("snippet");
+                    playlistItemsRequest.PlaylistId = uploadListID;
+                    playlistItemsRequest.MaxResults = 20;
+                    playlistItemsRequest.PageToken = pageToken;
+                    var playlistItemsResponse = await playlistItemsRequest.ExecuteAsync();
+                    foreach (var video in playlistItemsResponse.Items)
+                    {
+                        string contentDeta = ytLink + video.Snippet.ResourceId.VideoId;
+                        
+                        
+                        string[] str = new string[4];
+                        str[1] = video.Snippet.Title;
+                        str[0] = video.Snippet.ChannelTitle;
+                        str[3] = contentDeta;
+                        str[2] = typeToString(type);
+                        ListViewItem item = new ListViewItem(str);
+                        list_queue.Items.Add(item);
+                    }
+                    pageToken = playlistItemsResponse.NextPageToken;
+                    label_Items.Text = list_queue.Items.Count.ToString();
+                }
             }
         }
-
-        private void downloader_DoWork(object sender, DoWorkEventArgs e)
+        private void label1_Click_1(object sender, EventArgs e)
         {
-            BackgroundWorker worker = sender as BackgroundWorker;
+
+        }
+
+        private void label_Items_Click(object sender, EventArgs e)
+        {
 
         }
     }
