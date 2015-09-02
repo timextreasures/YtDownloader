@@ -114,4 +114,7 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+	<data name="PrintingBox_PrintingBox_Please_select_a_download_path_" xml:space="preserve">
+    <value>Please select a download path!</value>
+  </data>
 </root>
