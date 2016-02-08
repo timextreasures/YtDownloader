@@ -14,43 +14,43 @@ using YoutubeExtractor;
 
 namespace ytDownloader_GUI
 {
-	public enum Type
+    public enum Type
     {
         Mp3,
         Mp4,
         None
     }
 
-	public enum Quality
-	{
-		Low,
-		Medium,
-		High,
-		SuperHigh
-		
-	}
+    public enum Quality
+    {
+        Low,
+        Medium,
+        High,
+        SuperHigh
+
+    }
     enum ColumnData
     {
         Channel = 0,
         Title = 1,
         Link = 2,
         Type = 3,
-		Quality = 4,
-        DataCount = 5 
+        Quality = 4,
+        DataCount = 5
     }
     struct LinkInfo
     {
-	    LinkInfo(string link, Type type, Quality info)
-	    {
-		    Link = link;
-		    DownloadType = type;
-		    QualityInfo = info;
-	    }
+        LinkInfo(string link, Type type, Quality info)
+        {
+            Link = link;
+            DownloadType = type;
+            QualityInfo = info;
+        }
         public string Link;
         public Type DownloadType;
-	    public Quality QualityInfo;
+        public Quality QualityInfo;
     }
-	
+
     public partial class PrintingBox : Form
     {
         private string _downloadDir = "Download/";
@@ -98,7 +98,7 @@ namespace ytDownloader_GUI
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            
+
         }
 
         private async void button_mp3_Click(object sender, EventArgs e)
@@ -138,7 +138,7 @@ namespace ytDownloader_GUI
                     {
                         end = link.Length;
                     }
-                    string channelID = link.Substring(indexStart,end - indexStart);
+                    string channelID = link.Substring(indexStart, end - indexStart);
                     await LoadChannel(channelID, toType(prefix), true);
                     button_download.Enabled = true;
                 }
@@ -146,7 +146,7 @@ namespace ytDownloader_GUI
                 {
                     var videoRequest = _youtubeService.Videos.List("contentDetails, id, snippet");
 
-                    string videoID = link.Substring(link.LastIndexOf("=")+1);
+                    string videoID = link.Substring(link.LastIndexOf("=") + 1);
                     videoRequest.Id = videoID;
 
                     var videoResponse = await videoRequest.ExecuteAsync();
@@ -157,16 +157,16 @@ namespace ytDownloader_GUI
                         str[1] = video.Snippet.Title;
                         str[2] = prefix;
                         str[3] = link;
-						str[4] = cmbQualitySetting.Text;
-						if (cmbQualitySetting.Text == "")
-						{
-							str[4] = "Low";
-						}
-	                    
+                        str[4] = cmbQualitySetting.Text;
+                        if (cmbQualitySetting.Text == "")
+                        {
+                            str[4] = "Low";
+                        }
+
 
                         item = list_queue.Items.Add(new ListViewItem(str));
                     }
-                    
+
                 }
             }
 
@@ -190,17 +190,17 @@ namespace ytDownloader_GUI
 
         private void textBox1_TextChanged(object sender, EventArgs e)
         {
-			
-		}
+
+        }
 
         private void label1_Click(object sender, EventArgs e)
         {
-            
+
         }
 
         private void list_queue_SelectedIndexChanged(object sender, EventArgs e)
         {
-            
+
         }
 
         private void button_clearlist(object sender, EventArgs e)
@@ -226,7 +226,7 @@ namespace ytDownloader_GUI
             {
                 downloader.RunWorkerAsync(listItems);
             }
-            
+
         }
 
         private void button_downloadDir(object sender, EventArgs e)
@@ -238,7 +238,7 @@ namespace ytDownloader_GUI
 
         private void save_download_HelpRequest(object sender, EventArgs e)
         {
-            
+
         }
 
         bool isFound(string compoundString, ListView.ListViewItemCollection items)
@@ -283,7 +283,7 @@ namespace ytDownloader_GUI
                 LinkInfo link;
                 link.Link = items[0].SubItems[3].Text;
                 link.DownloadType = toType(items[0].SubItems[2].Text);
-	            link.QualityInfo = ToQualityType(items[0].SubItems[4].Text);
+                link.QualityInfo = ToQualityType(items[0].SubItems[4].Text);
                 Download(link, _downloadDir);
                 items.RemoveAt(0);
             }
@@ -300,14 +300,14 @@ namespace ytDownloader_GUI
             var items = list_queue.Items;
             if (items.Count > 0 && download_progress.Value > 99)
             {
-                
+
                 items.RemoveAt(0);
                 label_Items.Text = items.Count.ToString();
             }
         }
         private void downloader_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            
+
         }
         /*
         * Converts string to type
@@ -343,56 +343,56 @@ namespace ytDownloader_GUI
             }
         }
 
-	    private Quality ToQualityType(string input)
-	    {
-		    Quality info = Quality.Low;
+        private Quality ToQualityType(string input)
+        {
+            Quality info = Quality.Low;
 
-		    if (input == "Low")
-		    {
-			    info = Quality.Low;
-		    }
-			else if (input == "Medium")
-			{
-				info = Quality.Medium;
-			}
-			else if (input == "High")
-			{
-				info = Quality.High;
-			}
-			else if (input == "Super High")
-			{
-				info = Quality.SuperHigh;
-			}
+            if (input == "Low")
+            {
+                info = Quality.Low;
+            }
+            else if (input == "Medium")
+            {
+                info = Quality.Medium;
+            }
+            else if (input == "High")
+            {
+                info = Quality.High;
+            }
+            else if (input == "Super High")
+            {
+                info = Quality.SuperHigh;
+            }
 
-		    return info;
-	    }
+            return info;
+        }
 
-	    private string QualityTypeToString(Quality input)
-	    {
-		    string output;
-		    switch (input)
-		    {
-			    case Quality.Low:
-				    output = "Low";
-				    break;
-			    case Quality.Medium:
-					output = "Medium";
-					break;
-			    case Quality.High:
-					output = "High";
-					break;
-			    case Quality.SuperHigh:
-					output = "SuperHigh";
-					break;
-			    default:
-				    throw new ArgumentOutOfRangeException(nameof(input), input, null);
-		    }
-		    return output;
-	    }
-		/*
+        private string QualityTypeToString(Quality input)
+        {
+            string output;
+            switch (input)
+            {
+                case Quality.Low:
+                    output = "Low";
+                    break;
+                case Quality.Medium:
+                    output = "Medium";
+                    break;
+                case Quality.High:
+                    output = "High";
+                    break;
+                case Quality.SuperHigh:
+                    output = "SuperHigh";
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(input), input, null);
+            }
+            return output;
+        }
+        /*
         * Downloads the link to the dir
         */
-		private void Download(LinkInfo info, string dir)
+        private void Download(LinkInfo info, string dir)
         {
             switch (info.DownloadType)
             {
@@ -429,7 +429,7 @@ namespace ytDownloader_GUI
             };
             audioDownloader.DownloadFinished += (sender, argss) =>
             {
-                
+
 
             };
 
@@ -441,25 +441,25 @@ namespace ytDownloader_GUI
 
             IEnumerable<VideoInfo> videoInfos = DownloadUrlResolver.GetDownloadUrls(link.Link);
 
-	        VideoInfo video;
-	        switch (link.QualityInfo)
-	        {
-		        case Quality.Low:
-					video = videoInfos.Where(info => info.Resolution < 480).OrderByDescending(info => info.Resolution).First();
-					break;
-		        case Quality.Medium:
-					video = videoInfos.Where(info => info.Resolution < 720).OrderByDescending(info => info.Resolution).First();
-					break;
-		        case Quality.High:
-			        video = videoInfos.Where(info => info.Resolution < 1080).OrderByDescending(info => info.Resolution).First();
+            VideoInfo video;
+            switch (link.QualityInfo)
+            {
+                case Quality.Low:
+                    video = videoInfos.Where(info => info.Resolution < 480).OrderByDescending(info => info.Resolution).First();
                     break;
-		        case Quality.SuperHigh:
-					video = videoInfos.OrderByDescending(info => info.Resolution).First();
-					break;
-		        default:
-			        throw new ArgumentOutOfRangeException();
-	        }
-	        if (video.RequiresDecryption)
+                case Quality.Medium:
+                    video = videoInfos.Where(info => info.Resolution < 720).OrderByDescending(info => info.Resolution).First();
+                    break;
+                case Quality.High:
+                    video = videoInfos.Where(info => info.Resolution < 1080).OrderByDescending(info => info.Resolution).First();
+                    break;
+                case Quality.SuperHigh:
+                    video = videoInfos.OrderByDescending(info => info.Resolution).First();
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+            if (video.RequiresDecryption)
             {
                 DownloadUrlResolver.DecryptDownloadUrl(video);
             }
@@ -487,7 +487,7 @@ namespace ytDownloader_GUI
 
         async Task LoadPlayList(string playlistID, Type type)
         {
-            
+
             var pageToken = "";
             while (pageToken != null)
             {
@@ -511,12 +511,12 @@ namespace ytDownloader_GUI
                 label_Items.Text = list_queue.Items.Count.ToString();
                 pageToken = playlistResponse.NextPageToken;
             }
-            
-            
+
+
         }
 
 
-        async Task LoadChannel(string userName, Type type,bool isID)
+        async Task LoadChannel(string userName, Type type, bool isID)
         {
             var channelItemsListRequest = _youtubeService.Channels.List("contentDetails, snippet, id, statistics");
             if (!isID)
@@ -539,8 +539,8 @@ namespace ytDownloader_GUI
                     foreach (var video in playlistItemsResponse.Items)
                     {
                         string contentDeta = YtLink + video.Snippet.ResourceId.VideoId;
-                        
-                        
+
+
                         string[] str = new string[4];
                         str[1] = video.Snippet.Title;
                         str[0] = video.Snippet.ChannelTitle;
@@ -564,13 +564,13 @@ namespace ytDownloader_GUI
 
         }
 
-		private void comboBox1_SelectedIndexChanged_1(object sender, EventArgs e)
-		{
-			button_add.Enabled = true;
-		}
-	}
+        private void comboBox1_SelectedIndexChanged_1(object sender, EventArgs e)
+        {
+            button_add.Enabled = true;
+        }
+    }
 
-	class MyClient : WebClient
+    class MyClient : WebClient
     {
         public bool HeadOnly { get; set; }
         protected override WebRequest GetWebRequest(Uri address)
